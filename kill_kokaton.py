@@ -194,12 +194,36 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Life_gauge: #体力ゲージに関するクラス
+    def __init__(self):  
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.life_guage = 100 #体力は100から消費する
+        self.image = self.font.render(f"Power: {self.life_guage}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 300, HEIGHT-50
+       
+
+    def life_gauge_down(self, d): 
+        collide = self.rect.colliderect(Enemy)
+        if collide: #もし敵とぶつかったら	
+            self.life_guage -= d #体力を引いていく
+        if Life_gauge == 0: 
+            #体力ゲージが0になったら、ゲームオーバー
+             return
+        
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Power: {self.life_guage}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
 
 def main():
     pg.display.set_caption("倒せ！こうかとん！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
     score = Score()
+    life_gauge = Life_gauge()
 
     bird = Bird( (900, 400))
     bombs = pg.sprite.Group()
@@ -247,9 +271,11 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        life_gauge.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
+
 
 
 if __name__ == "__main__":
