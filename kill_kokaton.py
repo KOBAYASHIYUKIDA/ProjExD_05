@@ -145,23 +145,26 @@ class Explosion(pg.sprite.Sprite):
 
 class Enemy(pg.sprite.Sprite):
     """
-    敵機に関するクラス
+    敵に関するクラス
     """
-    imgs = [pg.image.load(f"ex05/fig/alien{i}.png") for i in range(1, 4)]
+    imgs = [pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster5.png"), 0, 0.2),
+            pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster6.png"), 0, 0.2),
+            pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster11.png"), 0, 0.2)]
     
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        self.num = random.randint(0, 2)
+        self.image = self.imgs[self.num]
         self.rect = self.image.get_rect()
         self.rect.right = WIDTH
         self.vy = +6
-        self.bound = random.randint(0, HEIGHT)  # 停止位置
+        self.bound = random.randint(30, HEIGHT)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.interval = random.randint(50, 300)  # Beam射撃インターバル
 
     def update(self):
         """
-        敵機を速度ベクトルself.vyに基づき移動（降下）させる
+        敵を速度ベクトルself.vyに基づき移動（降下）させる
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         引数 screen：画面Surface
         """
@@ -169,6 +172,47 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
+
+
+class EnemyBeam(pg.sprite.Sprite):
+    """
+    Enemyの攻撃に関するクラス
+    """
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+
+    def __init__(self, emy: "Enemy", bird: Bird):
+        """
+        爆弾円Surfaceを生成する
+        引数1 emy：爆弾を投下する敵機
+        引数2 bird：攻撃対象のこうかとん
+        """
+        super().__init__()
+        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
+        self.image = pg.Surface((2*10, 2*10))
+        pg.draw.circle(self.image, color, (10, 10), 10)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
+        self.rect.centerx = emy.rect.centerx
+        self.rect.centery = emy.rect.centery
+        self.vy = 0
+        if emy.num == 0:
+            self.speed = 3
+        elif emy.num == 1:
+            self.speed = 6
+            self.vy = random.randint(-1, 1)
+        else:
+            self.speed = 10
+
+    def update(self):
+        """
+        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(-self.speed, self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
 
 
 class Score:
@@ -202,7 +246,7 @@ def main():
     score = Score()
 
     bird = Bird( (900, 400))
-    bombs = pg.sprite.Group()
+    enemyBeams = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
@@ -223,15 +267,20 @@ def main():
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
+        for emy in emys:
+            if emy.state == "stop" and tmr%emy.interval == 0:
+                # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
+                enemyBeams.add(EnemyBeam(emy, bird))
+
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
 
-        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+        for enemyBeam in pg.sprite.groupcollide(enemyBeams, beams, True, True).keys():
+            exps.add(Explosion(enemyBeam, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+        if len(pg.sprite.spritecollide(bird, enemyBeams, True)) != 0:
             score.update(screen)
             pg.display.update()
             time.sleep(2)
@@ -242,8 +291,8 @@ def main():
         beams.draw(screen)
         emys.update()
         emys.draw(screen)
-        bombs.update()
-        bombs.draw(screen)
+        enemyBeams.update()
+        enemyBeams.draw(screen)
         exps.update()
         exps.draw(screen)
         score.update(screen)
