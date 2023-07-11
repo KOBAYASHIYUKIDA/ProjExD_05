@@ -147,17 +147,24 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"ex05/fig/alien{i}.png") for i in range(1, 4)]
+    imgs = [pg.image.load(f"ex05/fig/monster{i}.png") for i in range(1, 4)]
+
     
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        self.im = random.randint(0, len(__class__.imgs)-1)
+        r = random.randint(0, len(__class__.obb))
+        o = random.randint(0, len(__class__.sr))
+        self.image = __class__.imgs[self.im]
+        self.image = __class__.imgs[r]
+        self.image = __class__.imgs[o]
         self.rect = self.image.get_rect()
         self.rect.right = WIDTH
         self.vy = +6
         self.bound = random.randint(0, HEIGHT)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.score = self.im+1
 
     def update(self):
         """
@@ -168,16 +175,18 @@ class Enemy(pg.sprite.Sprite):
         if self.rect.centery > self.bound:
             self.vy = 0
             self.state = "stop"
-        self.rect.centery += self.vy
+        self.rect.centery += self.vy     
 
-
-class Score:
+class Score(pg.sprite.Sprite):
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
     爆弾：1点
     敵機：10点
     """
-    def __init__(self):
+
+    def __init__(self, emy: Enemy):
+        super().__init__()
+        #im = random.randint(0, len(__class__.imgs))
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
         self.score = 0
@@ -186,7 +195,14 @@ class Score:
         self.rect.center = 100, HEIGHT-50
 
     def score_up(self, add): #スコアを加算
+        #if self.emy.im == 0:
+        #    self.score += 5
+        #if self.emy.im == 1:
+        #    self.score += 10
+        #if self.im == 2:
+        #    self.score += 15
         self.score += add
+
 
 
     def update(self, screen: pg.Surface):
@@ -199,13 +215,14 @@ def main():
     pg.display.set_caption("倒せ！こうかとん！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
-    score = Score()
+    
 
     bird = Bird( (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    score = Score(emys)
 
     tmr = 0
     clock = pg.time.Clock()
@@ -225,17 +242,16 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.score_up(10)  # 10点アップ
+            if emy.im == 0:
+                score.score_up(10)  # 10点アップ
+            elif emy.im == 1:
+                score.score_up(15)
+            else:
+                score.score_up(20)
 
-        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-            score.score_up(1)  # 1点アップ
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
+        # for e in emys:
+        #     print(e.score)
 
         bird.update(key_lst, screen)
         beams.update()
