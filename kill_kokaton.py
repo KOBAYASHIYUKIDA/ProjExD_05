@@ -153,11 +153,7 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.im = random.randint(0, len(__class__.imgs)-1)
-        r = random.randint(0, len(__class__.obb))
-        o = random.randint(0, len(__class__.sr))
         self.image = __class__.imgs[self.im]
-        self.image = __class__.imgs[r]
-        self.image = __class__.imgs[o]
         self.rect = self.image.get_rect()
         self.rect.right = WIDTH
         self.vy = +6
@@ -243,11 +239,17 @@ def main():
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             if emy.im == 0:
-                score.score_up(10)  # 10点アップ
+                score.score_up(5) # 5点アップ
             elif emy.im == 1:
-                score.score_up(15)
+                score.score_up(10) # 10点アップ
+            elif emy.im == 2:
+                score.score_up(15) # 15点アップ
             else:
-                score.score_up(20)
+                score.update(screen)
+                pg.display.update()
+                font1 = pg.font.Font(None, 50)
+                text1 = font1.render("ゲームクリア", True, (255,0,0))
+                time.sleep(5)
 
 
         # for e in emys:
