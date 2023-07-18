@@ -229,26 +229,6 @@ class Boss_life:
         self.image = self.font.render(f"LIFE: {self.life}", 0, self.color)
         screen.blit(self.image, self.rect)
         
-"""
-class Boss_beam(pg.sprite.Sprite):
-    ボスのビームに関するクラス
-    def __init__(self, boss: Last_boss):
-        super().__init__()
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/beam.png"), 0, 2.0)
-        self.rect = self.image.get_rect()
-        self.rect.right = boss.rect.left
-        self.rect.centery = boss.rect.centery
-        self.vx, self.vy = -5, 0
-        self.speed = 5
-
-
-    def update(self):
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
-        if check_bound(self.rect) != (True, True):
-            self.kill()
-"""
 
 def main():
     pg.display.set_caption("倒せ！こうかとん！")
@@ -257,7 +237,6 @@ def main():
     score = Score()
     boss_life = Boss_life()
     boses = Last_boss()
-    #boss_beam = pg.sprite.Group()
     bird = Bird( (900, 400))
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
