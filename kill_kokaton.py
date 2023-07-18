@@ -103,16 +103,41 @@ class Beam(pg.sprite.Sprite):
         self.rect.centery = bird.rect.centery
         self.vx, self.vy = +5, 0
         self.speed = 5
-
+    def speedup(self,speed):
+        self.speed = speed
 
     def update(self):
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        self.rect.move_ip(+self.speed*self.vx, 0)
         if check_bound(self.rect) != (True, True):
             self.kill()
+        
+
+class Item(pg.sprite.Sprite):   
+    """"
+    アイテムによって、攻撃スピードアップ
+
+    """
+    def __init__(self):
+     
+     super().__init__()
+     self.image = pg.transform.rotozoom(pg.image.load(f"ex05/22961558.png"), 0, 0.05)
+     self.rect = self.image.get_rect()
+     self.rect.left = WIDTH #
+     self.rect.centery = random.randint(0,600)
+     self.vx, self.vy = -5, 0
+     self.speed = 3 #アイテムのスピード
+
+     
+    def update(self, screen: pg.Surface):
+     
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        screen.blit(self.image, self.rect)
+        #if check_bound(self.rect) != (True, True):
+           #self.life_guage +=10
 
 
 class Explosion(pg.sprite.Sprite):
@@ -202,12 +227,14 @@ def main():
     score = Score()
 
     bird = Bird( (900, 400))
+    beam= Beam(bird)
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
 
     tmr = 0
+    time = 0
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -215,13 +242,24 @@ def main():
             if event.type == pg.QUIT:
                 return 0
 
-            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE: 
                 beams.add(Beam(bird))
                 
         screen.blit(bg_img, [0, 0])
                     
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
+
+        if tmr%500 == 0 :  # 500フレームに1回，アイテムを出現させる
+            item = Item()
+
+        
+        #for item in pg.sprite.groupcollide(item, bird, True, True).keys():
+
+        if item is not None:
+    
+            if item.rect.colliderect(bird.rect):
+               item = None #アイテムに触れたらアイテムの表示を消す
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -247,6 +285,13 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        if item is not None:
+            item.update(screen)
+            #item.draw(screen)
+        elif item is None:
+            beams.update()
+            beams.update()#ビームを加速させる
+            beams.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
