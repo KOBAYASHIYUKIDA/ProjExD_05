@@ -172,10 +172,8 @@ class Enemy(pg.sprite.Sprite):
     """
     敵に関するクラス
     """
-    imgs = [pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster5.png"), 0, 0.2),
-            pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster6.png"), 0, 0.2),
-            pg.transform.rotozoom(pg.image.load(f"ex05/fig/monster11.png"), 0, 0.2)]
-    
+
+    imgs = [pg.image.load(f"ex05/fig/monster{i}.png") for i in range(1, 4)]
     def __init__(self):
         super().__init__()
         self.num = random.randint(0, 2)
@@ -185,6 +183,7 @@ class Enemy(pg.sprite.Sprite):
         self.vy = +6
         self.bound = random.randint(30, HEIGHT)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
+        self.score = self.im+1
         self.interval = random.randint(50, 300)  # Beam射撃インターバル
 
     def update(self):
@@ -196,7 +195,7 @@ class Enemy(pg.sprite.Sprite):
         if self.rect.centery > self.bound:
             self.vy = 0
             self.state = "stop"
-        self.rect.centery += self.vy
+        self.rect.centery += self.vy     
 
 
 class EnemyBeam(pg.sprite.Sprite):
@@ -246,7 +245,10 @@ class Score:
     爆弾：1点
     敵機：10点
     """
-    def __init__(self):
+
+    def __init__(self, emy: Enemy):
+        super().__init__()
+        #im = random.randint(0, len(__class__.imgs))
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
         self.score = 0
@@ -255,7 +257,14 @@ class Score:
         self.rect.center = 100, HEIGHT-50
 
     def score_up(self, add): #スコアを加算
+        #if self.emy.im == 0:
+        #    self.score += 5
+        #if self.emy.im == 1:
+        #    self.score += 10
+        #if self.im == 2:
+        #    self.score += 15
         self.score += add
+
 
 
     def update(self, screen: pg.Surface):
@@ -337,6 +346,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    score = Score(emys)
     boss = pg.sprite.Group()
     num = 0
 
@@ -370,7 +380,19 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.score_up(50)  # 10点アップ
+            if emy.num == 0:
+                score.score_up(5) # 5点アップ
+            elif emy.num == 1:
+                score.score_up(10) # 10点アップ
+            elif emy.num == 2:
+                score.score_up(15) # 15点アップ
+            else:
+                score.update(screen)
+                pg.display.update()
+                font1 = pg.font.Font(None, 50)
+                text1 = font1.render("ゲームクリア", True, (255,0,0))
+                time.sleep(5)
+
         
         if score.score >= 100 and num == 0:
             boss_life.update(screen)
