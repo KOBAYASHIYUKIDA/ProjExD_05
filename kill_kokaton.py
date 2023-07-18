@@ -297,36 +297,39 @@ class Boss_life:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"LIFE: {self.life}", 0, self.color)
         screen.blit(self.image, self.rect)
-        
-"""
-class Boss_beam(pg.sprite.Sprite):
-    ボスのビームに関するクラス
-    def __init__(self, boss: Last_boss):
-        super().__init__()
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/beam.png"), 0, 2.0)
+
+
+class Life_gauge: #体力ゲージに関するクラス
+    def __init__(self):  
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.life_guage = 100 #体力は100から消費する
+        self.image = self.font.render(f"Power: {self.life_guage}", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.right = boss.rect.left
-        self.rect.centery = boss.rect.centery
-        self.vx, self.vy = -5, 0
-        self.speed = 5
+        self.rect.center = 300, HEIGHT-50
+       
 
+    def life_gauge_down(self, d): 
+        collide = self.rect.colliderect(Enemy)
+        if collide: #もし敵とぶつかったら	
+            self.life_guage -= d #体力を引いていく
+        if Life_gauge == 0: 
+            #体力ゲージが0になったら、ゲームオーバー
+             return
+        
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Power: {self.life_guage}", 0, self.color)
+        screen.blit(self.image, self.rect)
 
-    def update(self):
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
-        if check_bound(self.rect) != (True, True):
-            self.kill()
-"""
 
 def main():
     pg.display.set_caption("倒せ！こうかとん！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
     score = Score()
+    life_gauge = Life_gauge()
     boss_life = Boss_life()
     boses = Last_boss()
-    #boss_beam = pg.sprite.Group()
     bird = Bird( (900, 400))
     beam= Beam(bird)
     bombs = pg.sprite.Group()
@@ -414,6 +417,7 @@ def main():
         boss.update()
         boss.draw(screen)
         score.update(screen)
+        life_gauge.update(screen)
 
         if item is not None:
             item.update(screen)
