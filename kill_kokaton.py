@@ -374,12 +374,7 @@ def main():
                 score.score_up(10) # 10点アップ
             elif emy.num == 2:
                 score.score_up(15) # 15点アップ
-            else:
-                font1 = pg.font.Font(None, 50)
-                text1 = font1.render("ゲームクリア", True, (255,0,0))
-                time.sleep(5)
 
-        
         if score.score >= 10 and num == 0:
             boss_life.update(screen)
             bg_img = pg.transform.rotozoom(pg.image.load(f"ex05/fig/pg_bg2.jpg"), 0, 2.0)
