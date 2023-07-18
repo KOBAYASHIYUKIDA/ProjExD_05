@@ -380,7 +380,7 @@ def main():
                 time.sleep(5)
 
         
-        if score.score >= 100 and num == 0:
+        if score.score >= 10 and num == 0:
             boss_life.update(screen)
             bg_img = pg.transform.rotozoom(pg.image.load(f"ex05/fig/pg_bg2.jpg"), 0, 2.0)
             boss.add(Last_boss())
