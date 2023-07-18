@@ -140,7 +140,7 @@ class Explosion(pg.sprite.Sprite):
         self.life -= 1
         self.image = self.imgs[self.life//10%2]
         if self.life < 0:
-            self.kill()
+            self.kill() 
 
 
 class Enemy(pg.sprite.Sprite):
@@ -237,19 +237,78 @@ class Score:
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+class Last_boss(pg.sprite.Sprite):
+    """
+    ラスボス
+    """
+    def __init__(self):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/7.png"), 0, 3.0)
+        self.rect = self.image.get_rect()
+        self.rect.right = WIDTH
+        self.vy = +1
 
+    def update(self):
+        self.rect.centery += self.vy * 8
+        # 画面端に到達したら方向を反転させる
+        if self.rect.bottom >= HEIGHT or self.rect.top <= 0:
+            self.vy *= -1
+
+class Boss_life:
+    """
+    ボスの体力
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (255, 0, 0)
+        self.life = 10
+        self.image = self.font.render(f"LIFE: {self.life}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT
+
+    def boss_lifes(self, dm):
+        self.life += dm
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"LIFE: {self.life}", 0, self.color)
+        screen.blit(self.image, self.rect)
+        
+"""
+class Boss_beam(pg.sprite.Sprite):
+    ボスのビームに関するクラス
+    def __init__(self, boss: Last_boss):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/beam.png"), 0, 2.0)
+        self.rect = self.image.get_rect()
+        self.rect.right = boss.rect.left
+        self.rect.centery = boss.rect.centery
+        self.vx, self.vy = -5, 0
+        self.speed = 5
+
+
+    def update(self):
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+"""
 
 def main():
     pg.display.set_caption("倒せ！こうかとん！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
     score = Score()
-
+    boss_life = Boss_life()
+    boses = Last_boss()
+    #boss_beam = pg.sprite.Group()
     bird = Bird( (900, 400))
     enemyBeams = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    boss = pg.sprite.Group()
+    num = 0
 
     tmr = 0
     clock = pg.time.Clock()
@@ -261,11 +320,6 @@ def main():
 
             elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-                
-        screen.blit(bg_img, [0, 0])
-                    
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
@@ -274,7 +328,29 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.score_up(10)  # 10点アップ
+            score.score_up(50)  # 10点アップ
+        
+        if score.score >= 100 and num == 0:
+            boss_life.update(screen)
+            bg_img = pg.transform.rotozoom(pg.image.load(f"ex05/fig/pg_bg_2.jpg"), 0, 4.0)
+            boss.add(Last_boss())
+            num = 1
+        else:
+            if tmr%200 == 0 and num == 0:
+                emys.add(Enemy())# 200フレームに1回，敵機を出現させる
+
+        if boss_life.life != 1:
+            for b in pg.sprite.groupcollide(boss, beams, False, True).keys():
+                boss_life.boss_lifes(-1)
+                exps.add(Explosion(b, 100))
+        else:
+            for bo in pg.sprite.groupcollide(boss, beams, True, True).keys():
+                exps.add(Explosion(bo, 100))
+                boss_life.boss_lifes(-1)
+                score.score_up(100)
+                pg.display.update()
+                time.sleep(1)  # 100点アップ
+                return
 
         for enemyBeam in pg.sprite.groupcollide(enemyBeams, beams, True, True).keys():
             exps.add(Explosion(enemyBeam, 50))  # 爆発エフェクト
@@ -285,6 +361,7 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        screen.blit(bg_img, [0, 0])
 
         bird.update(key_lst, screen)
         beams.update()
@@ -295,7 +372,10 @@ def main():
         enemyBeams.draw(screen)
         exps.update()
         exps.draw(screen)
+        boss.update()
+        boss.draw(screen)
         score.update(screen)
+        boss_life.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
